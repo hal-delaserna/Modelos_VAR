@@ -1,0 +1,9 @@
+.Rhistory
+.Rproj.user/
+*.RData
+.Ruserdata
+.Rapp.history
+*.utf8.md
+*.knit.md
+*.nb.html
+*.log
