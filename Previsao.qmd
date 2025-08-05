@@ -1,0 +1,187 @@
+---
+title: "Previsão com VAR"
+format:
+  html:
+    embed-resources: true
+standalone: true
+---
+```{r}
+#| include: false
+library(vars)
+data("Canada")
+
+
+```
+
+## **ROTEIRO PARA PROJEÇÃO DE RECEITAS COM VAR/VECM**
+
+\
+\
+\
+
+
+| Previsão com VAR                  |
+| :--------------------------------:|
+| Testes de estacionariedade        |
+| Teste de cointegração (Johansen)  |
+| Estimar VAR ou VECM               |
+| Diagnóstico do modelo             |
+| Previsão de receitas              |
+| Análise de IRF e FEVD (opcional)  | 
+---
+
+\
+\
+
+
+
+### **Análise exploratória e testes de estacionariedade**
+
+**Objetivo:** identificar o grau de integração (I(0) ou I(1)).
+
+1. **Plotar as séries no tempo**: verificar tendência, sazonalidade, rupturas.
+
+   * Logaritmos: estabiliza variância.
+   * Diferenças percentuais (crescimentos): se necessário.
+
+> Conselho: VAR deve ter, no máximo, 2 ou 3 variáveis. 
+
+
+```{r}
+ts(data = Canada, start = c(2012,3), frequency=12)
+
+plot.ts()
+
+
+```
+
+
+
+
+
+
+\
+
+### **Aplicar testes de raiz unitária**:
+
+   * ADF (Augmented Dickey-Fuller)
+   * PP (Phillips-Perron)
+   * KPSS (teste de estacionariedade)
+   
+> Num teste ADF usamos a distribuição *tau*, não t-student.   
+> Cautela: o teste é mais falho quando $\rho$ aproxima-se de 1 ($y_t = \rho y_{t-1} + z_t$)  
+> Conselho: mais importante é o padrão gráfico da FAC. O teste é apenas confirmatório.  
+   
+```{r}
+# Correlogramas
+
+Acf(log(pess_ocup), lag.max=24, 
+    main = "Função de autocorrelação da série em nível")
+
+Acf(diff(log(pess_ocup)), lag.max=24, 
+    main = "Função de autocorrelação da série na primeira diferença")
+```
+   
+   
+   
+```{r}
+
+##  Testes ADF
+# H0: I(1), ou seja, não-estacionário / 1 RU
+? ur.df
+
+teste1 <- ur.df(log(pess_ocup), type="trend", selectlags="BIC")
+summary(teste1)
+
+teste2 <- ur.df(log(pess_ocup), type="drift", selectlags="BIC")
+summary(teste2)
+
+teste3 <- ur.df(log(pess_ocup), type="none", selectlags="BIC")
+summary(teste3)
+
+
+```
+
+   
+
+ Resultado:
+
+* Se todas as séries são estacionárias (I(0)) → vá para VAR.
+* Se são I(1) → siga para a Etapa 3.
+
+---
+
+\
+
+### **Teste de cointegração**
+
+**Objetivo:** verificar se há uma relação de equilíbrio de longo prazo entre as variáveis.
+
+1. **Aplicar teste de Johansen (trace test e max eigenvalue test)**:
+
+   * Define o número de vetores de cointegração $r$.
+
+ Resultado:
+
+* Se **r ≥ 1**→ as variáveis são cointegradas → use **VECM**.
+* Se **r = 0**→ use **VAR em primeiras diferenças**.
+
+> VECM é o VAR com correção de erro.
+
+
+---
+
+\
+
+### **Estimação do modelo**
+
+**Objetivo:** ajustar o modelo correto para os dados.
+
+1. **Escolher ordem $p$ do modelo VAR/VECM**:
+
+   * Critérios de informação: AIC, BIC, HQIC.
+2. **Estimar o modelo VAR ou VECM**.
+3. **Diagnóstico do modelo**:
+
+   * Resíduos: autocorrelação (LM test), heterocedasticidade.
+   * Estabilidade (raízes dentro do círculo unitário).
+   * Normalidade dos resíduos (se necessário para inferência).
+
+> Em séries temporais é aceitável sacrificar significâcia estatística em favor de resíduos bem comportados
+> Se o objetivo for preditivo, a significância estatística é menos crucial (do que seria num teste de causalidade).
+
+---
+
+\
+
+### **Geração de previsões**
+
+**Objetivo:** gerar projeções da receita e avaliar sua precisão.
+
+1. **Projeção fora da amostra**:
+
+   * `forecast` em R ou `predict` em Python/Stata.
+2. **Intervalos de confiança**: inclua incerteza nos choques futuros.
+3. **Plotar as previsões**.
+4. **Avaliação preditiva**(se dados disponíveis):
+
+   * RMSE, MAE, MAPE usando janela de validação.
+
+---
+
+\
+
+### **Opcional: Funções Impulso-Resposta e Decomposição da Variância**
+
+**Objetivo:** entender efeitos dinâmicos dos choques nas variáveis.
+
+1. **IRF**: efeito de um choque em uma variável sobre a receita.
+2. **FEVD (Forecast Error Variance Decomposition)**: quanto da variância do erro de previsão da receita é explicada por cada variável.
+
+
+> Analise de função de resposta ao impulso requer pelo menos 50 observações 
+
+
+---
+
+
